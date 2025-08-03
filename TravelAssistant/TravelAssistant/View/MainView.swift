@@ -19,11 +19,14 @@ struct MainView: View {
             VStack(spacing: 20) {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
+                        // 輸入框
                         TextField("請輸入想查詢的地點或行程，例如：我想去台北101", text: $viewModel.inputText)
                             .padding(10)
                             .background(Color.white.opacity(0.85))
                             .cornerRadius(16)
                             .shadow(color: Color.white.opacity(0.18), radius: 2, x: 0, y: 1)
+                        // clearButton
+                        // (UIKit UITextField() clearButtonMode = .whileEditing 的功能)
                         if !viewModel.inputText.isEmpty {
                             Button(action: { viewModel.inputText = "" }) {
                                 Image(systemName: "xmark.circle.fill")
@@ -32,6 +35,7 @@ struct MainView: View {
                             .padding(.trailing, 8)
                         }
                     }
+                    // 送出查詢 按鈕
                     Button {
                         Task { await viewModel.onQuerySubmit() }
                     } label: {
@@ -55,6 +59,7 @@ struct MainView: View {
                 .cornerRadius(28)
                 .shadow(color: Color.black.opacity(0.15), radius: 16, x: 0, y: 6)
                 .padding([.leading, .trailing])
+                // 顯示 response 內容
                 ScrollView {
                     Text(viewModel.displayText)
                         .font(.body)
