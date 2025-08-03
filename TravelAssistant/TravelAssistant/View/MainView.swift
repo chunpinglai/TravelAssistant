@@ -13,18 +13,28 @@ struct MainView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            // 使用者輸入框，綁定到 inputText
-            HStack {
-                TextField("請輸入想查詢的地點或行程，例如：我想去台北101", text: $viewModel.inputText)
-                    .textFieldStyle(.roundedBorder)
-                // 加入 UIKit UITextField() clearButtonMode = .whileEditing 的功能
-                if !viewModel.inputText.isEmpty {
-                    Button(action: { viewModel.inputText = "" }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    TextField("請輸入想查詢的地點或行程，例如：我想去台北101", text: $viewModel.inputText)
+                        .textFieldStyle(.roundedBorder)
+                    if !viewModel.inputText.isEmpty {
+                        Button(action: { viewModel.inputText = "" }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.trailing, 8)
                     }
-                    .padding(.trailing, 8)
                 }
+                Button {
+                    Task { await viewModel.onQuerySubmit() }
+                } label: {
+                    Text("送出查詢")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .padding(.top, 4)
+                .disabled(viewModel.inputText.trimmingCharacters(in: .whitespaces).isEmpty)
             }
             .padding()
 
@@ -38,18 +48,6 @@ struct MainView: View {
             .background(Color(UIColor.secondarySystemBackground))
             .cornerRadius(12)
             .padding([.leading, .trailing])
-
-            // 送出查詢按鈕
-            Button {
-                Task { await viewModel.onQuerySubmit() }
-            } label: {
-                Text("送出查詢")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .padding([.leading, .trailing])
-            .disabled(viewModel.inputText.trimmingCharacters(in: .whitespaces).isEmpty)
         }
         .navigationTitle("旅行助理")
         .padding(.top, 40)
