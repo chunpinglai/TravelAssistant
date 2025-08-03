@@ -8,6 +8,8 @@
 import FoundationModels // WWDC25 新增的自然語言模型套件
 import CoreLocation
 import WeatherKit
+import Combine
+import MapKit
 
 // MARK: - 主畫面 ViewModel
 class MainViewModel: ObservableObject {
@@ -72,7 +74,12 @@ class LanguageModelManager {
         )
 
         // 取得起點位置（如果無明確指定就用 GPS），並查天氣
-        let startLocation = queryStruct.startLocation ?? await locationManager.currentLocationName()
+        var startLocation: String?
+        if let s = queryStruct.startLocation, !s.isEmpty {
+            startLocation = s
+        } else {
+            startLocation = await locationManager.currentLocationName()
+        }
         let startWeather = try? await weatherService.weatherSummary(for: await locationManager.currentLocationCoordinate())
 
         // 若有目的地，解析並查天氣
@@ -99,13 +106,13 @@ class LanguageModelManager {
 // MARK: - @Generable struct：TravelQuery
 /// 用於 LLM 解析 inputText，產生結構化查詢
 @Generable
-struct TravelQuery {
+struct TravelQuery: Decodable {
     /// 使用者當前輸入的出發地名稱，若未指定請為空
-    @Guide("使用者當前輸入的出發地名稱，若未指定請為空")
+    @Guide(description: "使用者當前輸入的出發地名稱，若未指定請為空")
     var startLocation: String?
 
     /// 使用者想要前往的目的地名稱，若未指定請為空
-    @Guide("使用者想要前往的目的地名稱，若未指定請為空")
+    @Guide(description: "使用者想要前往的目的地名稱，若未指定請為空")
     var destination: String?
 }
 
@@ -137,6 +144,7 @@ class ToolCallingHandler {
 class LocationManager: NSObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
     private var locationContinuation: CheckedContinuation<CLLocationCoordinate2D, Never>?
+    private let geocoder = CLGeocoder()
 
     override init() {
         super.init()
@@ -150,6 +158,11 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         locationManager.requestWhenInUseAuthorization()
         locationManager.startUpdatingLocation()
 
+        // 注意：多次呼叫時可能會覆寫 continuation，這裡示意可依專案需求調整處理方式
+        if locationContinuation != nil {
+            locationContinuation?.resume(returning: locationManager.location?.coordinate ?? CLLocationCoordinate2D())
+        }
+
         return await withCheckedContinuation { continuation in
             self.locationContinuation = continuation
         }
@@ -157,31 +170,52 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
 
     /// CLLocationManagerDelegate 回調
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let continuation = locationContinuation else { return }
         if let loc = locations.first {
             locationManager.stopUpdatingLocation()
-            locationContinuation?.resume(returning: loc.coordinate)
+            continuation.resume(returning: loc.coordinate)
             locationContinuation = nil
         }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        locationContinuation?.resume(returning: CLLocationCoordinate2D())
+        locationContinuation = nil
     }
 
     /// 由經緯度反查地名
     func currentLocationName() async -> String? {
         let coord = await currentLocationCoordinate()
         let location = CLLocation(latitude: coord.latitude, longitude: coord.longitude)
-        let geocoder = CLGeocoder()
-        return await withCheckedContinuation { continuation in
-            geocoder.reverseGeocodeLocation(location) { placemarks, _ in
-                let name = placemarks?.first?.name ?? "未知位置"
-                continuation.resume(returning: name)
+        return await withCheckedContinuation { [weak self] continuation in
+            guard let self = self else {
+                continuation.resume(returning: nil)
+                return
+            }
+            if self.geocoder.isGeocoding {
+                self.geocoder.cancelGeocode()
+            }
+            self.geocoder.reverseGeocodeLocation(location) { placemarks, error in
+                if let name = placemarks?.first?.name {
+                    continuation.resume(returning: name)
+                } else {
+                    continuation.resume(returning: "未知位置")
+                }
             }
         }
     }
 
     /// 由地名查經緯度
     func coordinate(for place: String) async -> CLLocationCoordinate2D? {
-        let geocoder = CLGeocoder()
-        return await withCheckedContinuation { continuation in
-            geocoder.geocodeAddressString(place) { placemarks, _ in
+        return await withCheckedContinuation { [weak self] continuation in
+            guard let self = self else {
+                continuation.resume(returning: nil)
+                return
+            }
+            if self.geocoder.isGeocoding {
+                self.geocoder.cancelGeocode()
+            }
+            self.geocoder.geocodeAddressString(place) { placemarks, error in
                 let coord = placemarks?.first?.location?.coordinate
                 continuation.resume(returning: coord)
             }
