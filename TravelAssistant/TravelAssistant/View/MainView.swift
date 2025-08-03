@@ -14,9 +14,19 @@ struct MainView: View {
     var body: some View {
         VStack(spacing: 24) {
             // 使用者輸入框，綁定到 inputText
-            TextField("請輸入想查詢的地點或行程，例如：我想去台北101", text: $viewModel.inputText)
-                .textFieldStyle(.roundedBorder)
-                .padding()
+            HStack {
+                TextField("請輸入想查詢的地點或行程，例如：我想去台北101", text: $viewModel.inputText)
+                    .textFieldStyle(.roundedBorder)
+                // 加入 UIKit UITextField() clearButtonMode = .whileEditing 的功能
+                if !viewModel.inputText.isEmpty {
+                    Button(action: { viewModel.inputText = "" }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.trailing, 8)
+                }
+            }
+            .padding()
 
             // 顯示 LLM 回傳資訊與 Tool Calling 結果
             ScrollView {
