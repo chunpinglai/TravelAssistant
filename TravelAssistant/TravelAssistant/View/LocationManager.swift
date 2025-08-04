@@ -23,17 +23,50 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
 
     /// 取得目前經緯度 (簡化版本，實務建議完善權限處理與多次調用管理)
     func currentLocationCoordinate() async -> CLLocationCoordinate2D {
-        // 請求定位權限
-        locationManager.requestWhenInUseAuthorization()
-        locationManager.startUpdatingLocation()
-
-        // 注意：多次呼叫時可能會覆寫 continuation，這裡示意可依專案需求調整處理方式
+        // 如果已經有位置且不太久遠，直接返回
+        if let currentLocation = locationManager.location,
+           currentLocation.timestamp.timeIntervalSinceNow > -60 { // 60秒內的位置
+            return currentLocation.coordinate
+        }
+        
+        // 檢查定位權限
+        let authStatus = locationManager.authorizationStatus
+        if authStatus == .denied || authStatus == .restricted {
+            print("定位權限被拒絕")
+            return CLLocationCoordinate2D(latitude: 0, longitude: 0)
+        }
+        
+        // 如果還沒有權限，請求權限
+        if authStatus == .notDetermined {
+            locationManager.requestWhenInUseAuthorization()
+            // 給一點時間等待權限回應
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒
+        }
+        
+        // 如果已經在進行定位，等待現有的 continuation
         if locationContinuation != nil {
-            locationContinuation?.resume(returning: locationManager.location?.coordinate ?? CLLocationCoordinate2D())
+            return await withCheckedContinuation { continuation in
+                // 這裡我們需要排隊等待
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    continuation.resume(returning: self.locationManager.location?.coordinate ?? CLLocationCoordinate2D(latitude: 0, longitude: 0))
+                }
+            }
         }
 
+        locationManager.startUpdatingLocation()
+        
         return await withCheckedContinuation { continuation in
             self.locationContinuation = continuation
+            
+            // 設置超時處理
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+                if self.locationContinuation != nil {
+                    print("定位超時")
+                    self.locationManager.stopUpdatingLocation()
+                    self.locationContinuation?.resume(returning: CLLocationCoordinate2D(latitude: 0, longitude: 0))
+                    self.locationContinuation = nil
+                }
+            }
         }
     }
 
@@ -48,8 +81,29 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        locationContinuation?.resume(returning: CLLocationCoordinate2D())
+        print("定位失敗: \(error.localizedDescription)")
+        locationManager.stopUpdatingLocation()
+        locationContinuation?.resume(returning: CLLocationCoordinate2D(latitude: 0, longitude: 0))
         locationContinuation = nil
+    }
+    
+    /// 處理權限變更
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        print("定位權限狀態變更: \(status.rawValue)")
+        switch status {
+        case .denied, .restricted:
+            print("定位權限被拒絕或限制")
+            locationContinuation?.resume(returning: CLLocationCoordinate2D(latitude: 0, longitude: 0))
+            locationContinuation = nil
+        case .authorizedWhenInUse, .authorizedAlways:
+            print("定位權限已授權")
+            // 權限獲得後，如果有等待的 continuation，開始定位
+            if locationContinuation != nil {
+                locationManager.startUpdatingLocation()
+            }
+        default:
+            break
+        }
     }
 
     /// 由經緯度反查地名 
