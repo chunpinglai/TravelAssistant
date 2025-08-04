@@ -20,7 +20,7 @@ struct MainView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         // 輸入框
-                        TextField("請輸入想查詢的地點或行程，例如：我想去台北101", text: $viewModel.inputText)
+                        TextField("example: I want to go to Taipei 101.", text: $viewModel.inputText)
                             .padding(10)
                             .background(Color.white.opacity(0.85))
                             .cornerRadius(16)
@@ -39,7 +39,7 @@ struct MainView: View {
                     Button {
                         Task { await viewModel.onQuerySubmit() }
                     } label: {
-                        Text("送出查詢")
+                        Text("Send")
                             .font(.headline)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)

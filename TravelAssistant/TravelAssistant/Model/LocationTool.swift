@@ -1,0 +1,51 @@
+//
+//  LocationTool.swift
+//  TravelAssistant
+//
+//  Created by Abby on 2025/8/4.
+//
+
+import CoreLocation
+import FoundationModels
+
+struct LocationTool: Tool {
+    
+    let name = "get startLocation and destination"
+    let description = """
+    Look up current location (latitude/longitude) 
+    or a human-readable place name. Returns latitude longitude.
+    """
+    
+    private let locationManager = LocationManager()
+
+    @Generable
+    struct Arguments {
+        //    @Guide(description: "使用者當前輸入的出發地或起始地點名稱，若未指定請為空")
+        @Guide(description: "The name of the departure or starting location currently entered by the user; leave empty if not specified.")
+        var startLocation: String?
+        
+        /// 使用者想要前往的目的地名稱，若未指定請為空
+        //    @Guide(description: "使用者想要前往的目的地名稱，若未指定請為空")
+        @Guide(description: "The name of the destination the user wants to go to; leave empty if not specified.")
+        var destination: String?
+    }
+    
+    func call(arguments: Arguments) async throws -> ToolOutput {
+        
+        var result: String = ""
+        if let startLocation = arguments.startLocation, !startLocation.isEmpty {
+            let coordinateResult = await locationManager.coordinate(for: startLocation)
+            result += "Start location coordinate: \(coordinateResult?.latitude ?? 0.0), \(coordinateResult?.longitude ?? 0.0)"
+        }
+        else {
+            let coordinateResult = await locationManager.currentLocationCoordinate()
+            let nameResult = await locationManager.currentLocationName()
+            result += "Start location from:\(nameResult ?? ""). coordinate: \(coordinateResult.latitude), \(coordinateResult.longitude)"
+        }
+        if let destination = arguments.destination, !destination.isEmpty {
+            let coordinateResult = await locationManager.coordinate(for: destination)
+            result += "\nDestination location coordinate: \(coordinateResult?.latitude ?? 0.0), \(coordinateResult?.longitude ?? 0.0)"
+        }
+        return ToolOutput("\(result)")
+    }
+}

@@ -30,11 +30,6 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		28F40F2E2E3EFB1200002D19 /* TravelAssistant */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = TravelAssistant;
-			sourceTree = "<group>";
-		};
 		28F40F3C2E3EFB1500002D19 /* TravelAssistantTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = TravelAssistantTests;
@@ -43,6 +38,11 @@
 		28F40F462E3EFB1500002D19 /* TravelAssistantUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = TravelAssistantUITests;
+			sourceTree = "<group>";
+		};
+		28F40FC82E41048700002D19 /* TravelAssistant */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = TravelAssistant;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -75,7 +75,7 @@
 		28F40F232E3EFB1200002D19 = {
 			isa = PBXGroup;
 			children = (
-				28F40F2E2E3EFB1200002D19 /* TravelAssistant */,
+				28F40FC82E41048700002D19 /* TravelAssistant */,
 				28F40F3C2E3EFB1500002D19 /* TravelAssistantTests */,
 				28F40F462E3EFB1500002D19 /* TravelAssistantUITests */,
 				28F40F2D2E3EFB1200002D19 /* Products */,
@@ -108,7 +108,7 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				28F40F2E2E3EFB1200002D19 /* TravelAssistant */,
+				28F40FC82E41048700002D19 /* TravelAssistant */,
 			);
 			name = TravelAssistant;
 			packageProductDependencies = (

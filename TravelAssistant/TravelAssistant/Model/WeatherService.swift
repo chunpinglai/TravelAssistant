@@ -49,7 +49,7 @@ class WeatherService {
     
     // OpenWeatherMap API Key - 請替換為你自己的 API Key
     // 註冊地址: https://openweathermap.org/api
-    private let openWeatherAPIKey = "YOUR_API_KEY_HERE"
+    private let openWeatherAPIKey = "6d0b0aa63c63fb18a2fcfc7250f4cf41"
     
     /// 使用 WeatherKit 取得天氣資訊（需要正確的開發者配置）
     func weatherSummaryWithWeatherKit(for coord: CLLocationCoordinate2D) async throws -> String {
@@ -63,9 +63,6 @@ class WeatherService {
     
     /// 使用 OpenWeatherMap API 取得天氣資訊（免費替代方案）
     func weatherSummaryWithOpenWeather(for coord: CLLocationCoordinate2D) async throws -> String {
-        guard openWeatherAPIKey != "YOUR_API_KEY_HERE" else {
-            throw WeatherServiceError.noAPIKey
-        }
         
         let urlString = "https://api.openweathermap.org/data/2.5/weather?lat=\(coord.latitude)&lon=\(coord.longitude)&appid=\(openWeatherAPIKey)&units=metric&lang=zh_tw"
         

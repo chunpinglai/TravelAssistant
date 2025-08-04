@@ -23,20 +23,21 @@ class MainViewModel: ObservableObject {
         do {
             let result = try await languageModelManager.processTravelQuery(inputText: inputText)
             // 組合顯示內容
-            var output = ""
-            if let start = result.startLocation {
-                output += "【起始點位置】：\(start)\n"
-            }
-            if let startWeather = result.startWeather {
-                output += "【起始點天氣】：\(startWeather)\n"
-            }
-            if let dest = result.destination {
-                output += "【終點位置】：\(dest)\n"
-            }
-            if let destWeather = result.destinationWeather {
-                output += "【終點天氣】：\(destWeather)\n"
-            }
-            displayText = output.isEmpty ? "查無結果，請確認輸入內容" : output
+//            var output = ""
+//            if let start = result.startLocation {
+//                output += "【起始點位置】：\(start)\n"
+//            }
+//            if let startWeather = result.startWeather {
+//                output += "【起始點天氣】：\(startWeather)\n"
+//            }
+//            if let dest = result.destination {
+//                output += "【終點位置】：\(dest)\n"
+//            }
+//            if let destWeather = result.destinationWeather {
+//                output += "【終點天氣】：\(destWeather)\n"
+//            }
+//            displayText = output.isEmpty ? "查無結果，請確認輸入內容" : output
+            displayText = result
         } catch {
             displayText = "查詢失敗：\(error.localizedDescription)"
         }
