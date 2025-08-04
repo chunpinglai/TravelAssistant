@@ -135,11 +135,19 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
                     return
                 }
                 
-                // 優先使用地點名稱，如果沒有則使用地址
-                let locationName = firstItem.name ?? 
-                                 firstItem.placemark.locality ?? 
-                                 firstItem.placemark.administrativeArea ?? 
-                                 "未知位置"
+                // 使用新的 API 替代已棄用的 placemark 屬性
+                let locationName: String
+                if let name = firstItem.name {
+                    locationName = name
+                } else if let address = firstItem.address {
+                    // 使用 address 屬性，它包含格式化的地址字串
+                    locationName = address
+                } else if #available(iOS 18.0, *), let addressRepresentation = firstItem.addressRepresentations.first {
+                    // 使用 addressRepresentations（iOS 18+）
+                    locationName = addressRepresentation.formattedAddress
+                } else {
+                    locationName = "未知位置"
+                }
                 continuation.resume(returning: locationName)
             }
         }
@@ -165,7 +173,8 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
                     return
                 }
                 
-                let coordinate = firstItem.placemark.coordinate
+                // 使用新的 location 屬性替代已棄用的 placemark.coordinate
+                let coordinate = firstItem.location?.coordinate ?? CLLocationCoordinate2D(latitude: 0, longitude: 0)
                 continuation.resume(returning: coordinate)
             }
         }
