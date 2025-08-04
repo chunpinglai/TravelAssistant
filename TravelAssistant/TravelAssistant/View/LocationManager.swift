@@ -109,9 +109,9 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     /// 由經緯度反查地名 
     func currentLocationName() async -> String? {
         let coord = await currentLocationCoordinate()
-        
+        print("coord:\(coord)")
         return await withCheckedContinuation { continuation in
-            let searchRequest = MKLocalSearchRequest()
+            let searchRequest = MKLocalSearch.Request()
             // 使用座標建立搜索區域
             let region = MKCoordinateRegion(
                 center: coord,
@@ -141,10 +141,10 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
                     locationName = name
                 } else if let address = firstItem.address {
                     // 使用 address 屬性，它包含格式化的地址字串
-                    locationName = address
-                } else if #available(iOS 18.0, *), let addressRepresentation = firstItem.addressRepresentations.first {
-                    // 使用 addressRepresentations（iOS 18+）
-                    locationName = addressRepresentation.formattedAddress
+                    locationName = address.description
+                } else if let addressRepresentation = firstItem.addressRepresentations?.description {
+                    // 使用 addressRepresentations
+                    locationName = addressRepresentation
                 } else {
                     locationName = "未知位置"
                 }
@@ -156,7 +156,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     /// 由地名查經緯度
     func coordinate(for place: String) async -> CLLocationCoordinate2D? {
         return await withCheckedContinuation { continuation in
-            let searchRequest = MKLocalSearchRequest()
+            let searchRequest = MKLocalSearch.Request()
             searchRequest.naturalLanguageQuery = place
             
             let search = MKLocalSearch(request: searchRequest)
@@ -174,7 +174,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
                 }
                 
                 // 使用新的 location 屬性替代已棄用的 placemark.coordinate
-                let coordinate = firstItem.location?.coordinate ?? CLLocationCoordinate2D(latitude: 0, longitude: 0)
+                let coordinate = firstItem.location.coordinate
                 continuation.resume(returning: coordinate)
             }
         }
@@ -183,7 +183,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     /// 使用 MapKit 的替代方法：由地名查詢並取得詳細資訊
     func searchPlaces(for query: String) async -> [MKMapItem] {
         return await withCheckedContinuation { continuation in
-            let searchRequest = MKLocalSearchRequest()
+            let searchRequest = MKLocalSearch.Request()
             searchRequest.naturalLanguageQuery = query
             
             let search = MKLocalSearch(request: searchRequest)
