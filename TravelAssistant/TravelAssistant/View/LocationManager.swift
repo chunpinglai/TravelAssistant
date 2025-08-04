@@ -7,6 +7,7 @@
 
 import Foundation
 import CoreLocation
+import MapKit
 
 // MARK: - 位置管理 LocationManager
 /// 取得使用者當前位置名稱、經緯度、以及 geocode 查詢
@@ -76,17 +77,46 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
 
     /// 由地名查經緯度
     func coordinate(for place: String) async -> CLLocationCoordinate2D? {
-        return await withCheckedContinuation { [weak self] continuation in
-            guard let self = self else {
-                continuation.resume(returning: nil)
-                return
+        return await withCheckedContinuation { continuation in
+            let searchRequest = MKLocalSearchRequest()
+            searchRequest.naturalLanguageQuery = place
+            
+            let search = MKLocalSearch(request: searchRequest)
+            search.start { response, error in
+                if let error = error {
+                    print("地名搜索錯誤: \(error.localizedDescription)")
+                    continuation.resume(returning: nil)
+                    return
+                }
+                
+                guard let response = response,
+                      let firstItem = response.mapItems.first else {
+                    continuation.resume(returning: nil)
+                    return
+                }
+                
+                let coordinate = firstItem.placemark.coordinate
+                continuation.resume(returning: coordinate)
             }
-            if self.geocoder.isGeocoding {
-                self.geocoder.cancelGeocode()
-            }
-            self.geocoder.geocodeAddressString(place) { placemarks, error in
-                let coord = placemarks?.first?.location?.coordinate
-                continuation.resume(returning: coord)
+        }
+    }
+    
+    /// 使用 MapKit 的替代方法：由地名查詢並取得詳細資訊
+    func searchPlaces(for query: String) async -> [MKMapItem] {
+        return await withCheckedContinuation { continuation in
+            let searchRequest = MKLocalSearchRequest()
+            searchRequest.naturalLanguageQuery = query
+            
+            let search = MKLocalSearch(request: searchRequest)
+            search.start { response, error in
+                if let error = error {
+                    print("地點搜索錯誤: \(error.localizedDescription)")
+                    continuation.resume(returning: [])
+                    return
+                }
+                
+                let mapItems = response?.mapItems ?? []
+                continuation.resume(returning: mapItems)
             }
         }
     }
