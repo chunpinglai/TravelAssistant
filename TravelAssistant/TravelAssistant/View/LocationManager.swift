@@ -14,7 +14,6 @@ import MapKit
 class LocationManager: NSObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()
     private var locationContinuation: CheckedContinuation<CLLocationCoordinate2D, Never>?
-    private let geocoder = CLGeocoder()
 
     override init() {
         super.init()
@@ -56,21 +55,38 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     /// 由經緯度反查地名 
     func currentLocationName() async -> String? {
         let coord = await currentLocationCoordinate()
-        let location = CLLocation(latitude: coord.latitude, longitude: coord.longitude)
-        return await withCheckedContinuation { [weak self] continuation in
-            guard let self = self else {
-                continuation.resume(returning: nil)
-                return
-            }
-            if self.geocoder.isGeocoding {
-                self.geocoder.cancelGeocode()
-            }
-            self.geocoder.reverseGeocodeLocation(location) { placemarks, error in
-                if let name = placemarks?.first?.name {
-                    continuation.resume(returning: name)
-                } else {
+        
+        return await withCheckedContinuation { continuation in
+            let searchRequest = MKLocalSearchRequest()
+            // 使用座標建立搜索區域
+            let region = MKCoordinateRegion(
+                center: coord,
+                latitudinalMeters: 1000,
+                longitudinalMeters: 1000
+            )
+            searchRequest.region = region
+            searchRequest.naturalLanguageQuery = "地標"
+            
+            let search = MKLocalSearch(request: searchRequest)
+            search.start { response, error in
+                if let error = error {
+                    print("反向地理編碼錯誤: \(error.localizedDescription)")
                     continuation.resume(returning: "未知位置")
+                    return
                 }
+                
+                guard let response = response,
+                      let firstItem = response.mapItems.first else {
+                    continuation.resume(returning: "未知位置")
+                    return
+                }
+                
+                // 優先使用地點名稱，如果沒有則使用地址
+                let locationName = firstItem.name ?? 
+                                 firstItem.placemark.locality ?? 
+                                 firstItem.placemark.administrativeArea ?? 
+                                 "未知位置"
+                continuation.resume(returning: locationName)
             }
         }
     }
