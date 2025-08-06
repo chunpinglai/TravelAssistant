@@ -49,7 +49,7 @@ struct StreamingView: View {
                                 do {
                                     let stream = manager.session.streamResponse(to: trimmedText)
                                     for try await partial in stream {
-                                        streamingContent += partial
+                                        streamingContent = partial
                                     }
                                 } catch {
                                     streamingContent = "錯誤：\(error.localizedDescription)"
