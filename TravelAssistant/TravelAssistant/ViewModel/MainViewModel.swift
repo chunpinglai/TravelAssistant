@@ -27,7 +27,12 @@ class MainViewModel: ObservableObject {
         do {
             displayText = try await languageModelManager.processInputText(inputText)
         } catch {
-            displayText = "查詢失敗：\(error.localizedDescription)"
+            var result = "查詢失敗"
+            if let generationError = error as? LanguageModelSession.GenerationError {
+                result += "主因:(\(generationError))"
+            }
+            result += ", error: \(error.localizedDescription)"
+            displayText = result
         }
     }
 }
