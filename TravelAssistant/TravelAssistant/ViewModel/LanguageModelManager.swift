@@ -10,7 +10,7 @@ import FoundationModels
 /// 管理 LLM
 class LanguageModelManager {
     
-    private let session: LanguageModelSession
+    let session: LanguageModelSession
 
     init() {
         // 註冊 Tool Calling 工具 + 設定 instructions
