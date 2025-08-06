@@ -9,7 +9,6 @@ import Foundation
 import CoreLocation
 import MapKit
 
-// MARK: - 位置管理 LocationManager
 /// 取得使用者當前位置名稱、經緯度、以及 geocode 查詢
 class LocationManager: NSObject, CLLocationManagerDelegate {
     private let locationManager = CLLocationManager()

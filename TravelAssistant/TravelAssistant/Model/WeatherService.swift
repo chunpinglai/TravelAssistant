@@ -9,7 +9,7 @@ import Foundation
 import CoreLocation
 import WeatherKit
 
-// MARK: - 天氣資料模型
+/// 天氣資料模型
 struct WeatherData: Codable {
     let main: Main
     let weather: [Weather]
@@ -33,18 +33,10 @@ struct WeatherData: Codable {
     }
 }
 
-// MARK: - 天氣查詢服務 WeatherService
 /// 支援 WeatherKit 和 OpenWeatherMap API 的天氣服務
-/*
-這個錯誤是因為 WeatherKit 需要特殊的配置和授權才能正常工作。WeatherKit 需要：
-
-Apple Developer Program 會員資格
-正確的 App ID 配置
-WeatherKit 服務授權
-正確的 Bundle Identifier
-讓我幫你創建一個備用的天氣服務，使用免費的 OpenWeatherMap API 作為替代方案：
-*/
 class WeatherService {
+    
+    /// WeatherKit 的 WeatherService
     private let weatherService = WeatherKit.WeatherService()
     
     // OpenWeatherMap API Key - 請替換為你自己的 API Key
@@ -122,7 +114,7 @@ class WeatherService {
     }
 }
 
-// MARK: - 錯誤類型
+/// 天氣錯誤類型
 enum WeatherServiceError: Error, LocalizedError {
     case noAPIKey
     case invalidURL

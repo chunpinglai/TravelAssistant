@@ -6,18 +6,14 @@
 //
 
 import FoundationModels
-import Combine
-import CoreLocation
-import WeatherKit
 
-// MARK: - LanguageModelManager
-/// 管理 LLM session 與 Tool Calling
+/// 管理 LLM
 class LanguageModelManager {
-    // 建立 LLM session
+    
     private let session: LanguageModelSession
 
     init() {
-        // 註冊 Tool Calling 工具
+        // 註冊 Tool Calling 工具 + 設定 instructions
         session = LanguageModelSession(tools: [WeatherTool(),
                                                LocationTool()],
                                        instructions: """
@@ -38,11 +34,10 @@ class LanguageModelManager {
          */
     }
 
-    /// 主流程：處理一筆查詢，回傳結構化結果
-    func processTravelQuery(inputText: String) async throws -> String {
+    /// 主流程：處理一筆查詢，回傳結果
+    func processInputText(_ inputText: String) async throws -> String {
         // 調用 LanguageModelSession，直接用 @Generable struct 解析 inputText
         do {
-//            let response = try await session.respond(to: inputText, generating: TravelResponse.self)
             let response = try await session.respond(to: inputText)
             return response.content
         } catch {

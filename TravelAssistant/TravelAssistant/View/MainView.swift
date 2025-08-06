@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-// MARK: - 主畫面 MainView
+/// 主畫面
 struct MainView: View {
     @StateObject private var viewModel = MainViewModel()
 

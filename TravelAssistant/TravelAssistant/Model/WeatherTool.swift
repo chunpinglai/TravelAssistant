@@ -8,6 +8,7 @@
 import FoundationModels
 import CoreLocation
 
+/// 從輸入文字中取得經緯度，call api 取得天氣
 struct WeatherTool: Tool {
     
     let name = "getWeather"
